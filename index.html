@@ -124,7 +124,7 @@
       //const verifyUrl = verifyLocation
       //  ? new URL(verifyLocation, `https://${AUTH0_DOMAIN}`).href
       //  : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
-      const verifyUrl `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
+      const verifyUrl = `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       
       const verifyResponse = await fetch(verifyUrl, {
         method: 'POST',
