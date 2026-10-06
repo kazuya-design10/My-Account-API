@@ -121,12 +121,12 @@
       const authnResponse = serializeCredential(credential);
       console.log('Serialized credential:', authnResponse);
 
-      //const locationHeader = challengeResponse.headers.get('Location');
-      //const verifyLocation = challenge.location || locationHeader;
-      //const verifyUrl = verifyLocation
-      //  ? new URL(verifyLocation, `https://${AUTH0_DOMAIN}`).href
-      //  : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
-      const verifyUrl=`${MY_ACCOUNT_BASE}/authentication-methods/verify`;
+      const locationHeader = challengeResponse.headers.get('Location');
+      const verifyLocation = challenge.location || locationHeader;
+      const verifyUrl = verifyLocation
+        ? new URL(verifyLocation, `https://${AUTH0_DOMAIN}`).href
+        : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
+      //const verifyUrl=`${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       
       console.log('verifyUrl:', verifyUrl);
       
