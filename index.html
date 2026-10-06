@@ -26,8 +26,7 @@
   const REDIRECT_URI = 'https://app.demo.yanase.mncoktlab-t.com/';
   const MY_ACCOUNT_AUDIENCE = `https://${AUTH0_DOMAIN}/me/`;
   const MY_ACCOUNT_BASE = `https://${AUTH0_DOMAIN}/me/v1`;
-  const REQUIRED_SCOPE = 'openid profile email read:me:authentication_methods create:me:authentication_methods';
-
+  const REQUIRED_SCOPE ='openid profile email offline_access read:me:authentication_methods create:me:authentication_methods';
   const views = ['loading','error','authenticated','unauthenticated'];
   const displayView = name => views.forEach(view => { document.getElementById(`view-${view}`).hidden = view !== name; });
   const setTextContent = (id, content) => { document.getElementById(id).textContent = content ?? ''; };
