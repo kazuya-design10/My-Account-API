@@ -105,6 +105,8 @@
         body: JSON.stringify({ type: 'passkey' })
       });
       const challenge = await readResponse(challengeResponse);
+      console.log('challenge=', challenge);
+      console.log('keys=', Object.keys(challenge));
       if (!challenge?.authn_params_public_key || !challenge?.auth_session) {
         throw new Error('Auth0の登録チャレンジ応答に必要な値がありません。');
       }
