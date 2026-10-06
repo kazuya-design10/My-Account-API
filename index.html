@@ -128,12 +128,14 @@
       //  : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       const verifyUrl=`${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       
+      console.log('verifyUrl:', verifyUrl);
+      
       const verifyResponse = await fetch(verifyUrl, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        //body: JSON.stringify({ auth_session: challenge.auth_session, authn_response: authnResponse })
         body: JSON.stringify({ type:'passkey',location: challenge.location,auth_session: challenge.auth_session, authn_response: authnResponse })
       });
+      console.log('verifyResponse通過');
       const verified = await readResponse(verifyResponse);
       console.log('Passkey verify result:', verified);
       showPasskeyStatus('Passkeyの登録が完了しました。');
