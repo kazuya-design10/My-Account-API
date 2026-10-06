@@ -1,0 +1,12 @@
+'use strict';
+const express = require('express');
+const path = require('path');
+const app = express();
+const port = process.env.PORT || 8080;
+app.disable('x-powered-by');
+app.use((req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','camera=(), geolocation=(), microphone=()');next();});
+app.get('/health',(_req,res)=>res.status(200).json({status:'ok'}));
+app.get('/api/config',(_req,res)=>{const config={auth0Domain:process.env.AUTH0_DOMAIN,auth0ClientId:process.env.AUTH0_CLIENT_ID,auth0Audience:process.env.AUTH0_AUDIENCE,myAccountApiBase:process.env.MY_ACCOUNT_API_BASE};const missing=Object.entries(config).filter(([,v])=>!v).map(([k])=>k);if(missing.length)return res.status(500).json({error:`Missing application settings: ${missing.join(', ')}`});res.setHeader('Cache-Control','no-store');return res.json(config);});
+app.use(express.static(path.join(__dirname,'public'),{extensions:['html']}));
+app.get(/.*/,(_req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
+app.listen(port,()=>console.log(`FlowDesk listening on port ${port}`));
