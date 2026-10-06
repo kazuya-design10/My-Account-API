@@ -257,17 +257,14 @@
 
     (async () => {
       try {
-        const appConfigResponse = await fetch('/api/config', { cache: 'no-store' });
-        if (!appConfigResponse.ok) throw new Error('アプリ設定を取得できませんでした。');
-        const appConfig = await appConfigResponse.json();
-        window.appConfig = appConfig;
         window.client = await auth0.createAuth0Client({
-          domain: appConfig.auth0Domain,
-          clientId: appConfig.auth0ClientId,
+          domain: 'demo.yanase.mncoktlab-t.com',
+          clientId: 'JX4D9OnnG6pgH9SLkGyLnDneoC7SFx8N',
           authorizationParams: {
             redirect_uri: location.origin,
-            audience: appConfig.auth0Audience,
-            scope: "openid profile email read:me:authentication_methods create:me:authentication_methods"
+            audience: 'https://demo.yanase.mncoktlab-t.com/me/',
+            scope:
+              'openid profile email read:me:authentication_methods create:me:authentication_methods'
           }
         });
 
@@ -340,7 +337,7 @@
         console.log("id claims", claims);
 
         const response = await fetch(
-          `${window.appConfig.myAccountApiBase}/v1/authentication-methods`,
+          `https://demo.yanase.mncoktlab-t.com/me/v1/authentication-methods`,
           
           {
             method: "POST",
@@ -377,7 +374,7 @@
         console.log(JSON.stringify(result.authn_params_public_key,null,2));
 
         const verifyResponse = await fetch(
-          `${window.appConfig.myAccountApiBase}/v1/authentication-methods/verify`,
+          `https://demo.yanase.mncoktlab-t.com/me/v1/authentication-methods/verify`,
           {
             method: "POST",
             headers: {
