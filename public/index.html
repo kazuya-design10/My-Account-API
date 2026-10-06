@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Demo | federated logout検証</title>
+  <style>
+    :root {
+      --primary: #00897b;
+      --primary-dark: #00695c;
+      --ink: #102a2e;
+      --muted: #587176;
+      --line: #d8e9e7;
+      --surface: #ffffff;
+      --soft: #f1f8f7;
+      --success: #15803d;
+      --danger: #b42318;
+      --shadow: 0 22px 60px rgba(8, 79, 74, .14);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 85% 8%, rgba(0, 137, 123, .16), transparent 28%),
+        linear-gradient(180deg, #f5fffd 0%, #ffffff 42%, #eef8f6 100%);
+      font-family: Inter, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      line-height: 1.65;
+    }
+
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    .container { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(216, 233, 231, .86);
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(16px);
+    }
+    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 800; letter-spacing: -.03em; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: linear-gradient(135deg, var(--primary), #26c6b8); box-shadow: 0 10px 24px rgba(0, 137, 123, .30); }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { color: #3f6264; text-decoration: none; font-size: 14px; font-weight: 600; }
+    .nav-links a:hover { color: var(--primary); }
+
+    .btn { min-height: 46px; padding: 0 20px; border: 1px solid transparent; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; text-decoration: none; transition: .2s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { color: #fff; background: var(--primary); box-shadow: 0 12px 30px rgba(0, 137, 123, .28); }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { color: var(--ink); border-color: var(--line); background: #fff; }
+    .btn-secondary:hover { border-color: #80cbc4; color: var(--primary); }
+    .btn-small { min-height: 40px; padding-inline: 16px; border-radius: 10px; }
+
+    .hero { padding: 88px 0 72px; overflow: hidden; }
+    .hero-grid { display: grid; grid-template-columns: 1.08fr .92fr; align-items: center; gap: 72px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid #a7ddd7; border-radius: 999px; color: #00796b; background: #e8f8f5; font-size: 13px; font-weight: 800; }
+    .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, .12); }
+    h1 { max-width: 720px; margin: 22px 0 20px; font-size: clamp(40px, 5.2vw, 68px); line-height: 1.12; letter-spacing: -.055em; }
+    .gradient-text { color: transparent; background: linear-gradient(90deg, var(--primary), #00acc1); background-clip: text; -webkit-background-clip: text; }
+    .hero-copy { max-width: 620px; margin: 0; color: var(--muted); font-size: 18px; }
+    .hero-actions { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .trust-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 18px; color: #667085; font-size: 13px; font-weight: 600; }
+    .trust-row span::before { content: "✓"; margin-right: 7px; color: var(--success); font-weight: 900; }
+
+    .dashboard-wrap { position: relative; }
+    .dashboard-wrap::before { content: ""; position: absolute; inset: 9% -10% -8% 8%; z-index: -1; border-radius: 50%; background: rgba(0, 137, 123, .20); filter: blur(55px); }
+    .dashboard { padding: 18px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: rgba(255,255,255,.88); box-shadow: var(--shadow); transform: rotate(1deg); }
+    .window-bar { display: flex; align-items: center; gap: 7px; padding: 2px 2px 16px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #e4e7ec; }
+    .mock-grid { display: grid; grid-template-columns: 128px 1fr; min-height: 355px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    .sidebar { padding: 20px 14px; color: #fff; background: #123a3b; }
+    .side-logo { width: 26px; height: 26px; margin-bottom: 28px; border-radius: 8px; background: linear-gradient(135deg, #4dd0c8, #fff); }
+    .side-item { height: 8px; margin: 15px 0; border-radius: 99px; background: rgba(255,255,255,.16); }
+    .side-item.active { width: 86%; background: rgba(77, 208, 200, .92); }
+    .mock-main { padding: 24px; background: #fbfbfd; }
+    .mock-title { width: 45%; height: 13px; margin-bottom: 22px; border-radius: 99px; background: #23494c; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .stat { height: 72px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .stat::before, .stat::after { content: ""; display: block; border-radius: 99px; background: #d9ece9; }
+    .stat::before { width: 55%; height: 7px; }
+    .stat::after { width: 38%; height: 13px; margin-top: 14px; background: #00a89a; }
+    .chart { height: 142px; margin-top: 14px; padding: 18px; display: flex; align-items: end; gap: 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .bar { flex: 1; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #26a69a, #b2dfdb); }
+    .bar:nth-child(1) { height: 38%; } .bar:nth-child(2) { height: 58%; } .bar:nth-child(3) { height: 46%; } .bar:nth-child(4) { height: 82%; } .bar:nth-child(5) { height: 68%; } .bar:nth-child(6) { height: 92%; }
+    .activity { height: 58px; margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(90deg, #fff 0 14%, #dff4f1 14% 34%, #fff 34%); }
+
+    .section { padding: 82px 0; }
+    .section-heading { max-width: 670px; margin: 0 auto 42px; text-align: center; }
+    .section-heading h2 { margin: 0 0 12px; font-size: clamp(30px, 4vw, 44px); line-height: 1.25; letter-spacing: -.04em; }
+    .section-heading p { margin: 0; color: var(--muted); }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .feature-card { padding: 28px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.8); box-shadow: 0 10px 30px rgba(27, 31, 45, .05); }
+    .feature-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 20px; border-radius: 13px; color: var(--primary); background: #e0f2f1; font-size: 20px; }
+    .feature-card h3 { margin: 0 0 8px; }
+    .feature-card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .cta { padding: 58px; display: flex; align-items: center; justify-content: space-between; gap: 30px; overflow: hidden; border-radius: 28px; color: #fff; background: linear-gradient(125deg, #123a3b, #00796b 60%, #00a89a); box-shadow: var(--shadow); }
+    .cta h2 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.04em; }
+    .cta p { margin: 0; color: rgba(255,255,255,.74); }
+    .cta .btn { flex: 0 0 auto; color: var(--primary); background: #fff; }
+
+    .status-view { min-height: 54vh; padding: 80px 0; }
+    .panel { max-width: 820px; margin: auto; padding: 32px; border: 1px solid var(--line); border-radius: 22px; background: #fff; box-shadow: var(--shadow); }
+    .panel h1 { margin: 6px 0 18px; font-size: 32px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .user-line { color: var(--muted); }
+    pre { max-height: 430px; margin: 22px 0; padding: 20px; overflow: auto; border-radius: 14px; color: #e9ecf5; background: #102f32; font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .loading { display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+    .spinner { width: 22px; height: 22px; border: 3px solid #cce9e5; border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: var(--danger); border-color: #fecdca; background: #fffbfa; }
+
+    footer { padding: 30px 0 42px; color: #8a92a3; font-size: 13px; }
+    .footer-inner { padding-top: 24px; display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); }
+
+    [hidden] { display: none !important; }
+    @media (max-width: 850px) {
+      .nav-links a:not(.btn) { display: none; }
+      .hero { padding-top: 58px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 50px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .dashboard { transform: none; }
+      .cta { padding: 38px 28px; align-items: flex-start; flex-direction: column; }
+    }
+    @media (max-width: 540px) {
+      .container { width: min(100% - 28px, 1120px); }
+      .nav { min-height: 64px; }
+      .brand span:last-child { display: none; }
+      h1 { font-size: 40px; }
+      .hero-actions .btn { width: 100%; }
+      .mock-grid { grid-template-columns: 82px 1fr; min-height: 300px; }
+      .mock-main { padding: 15px; }
+      .stat-row { grid-template-columns: 1fr; }
+      .stat:nth-child(n+2) { display: none; }
+      .panel { padding: 24px 18px; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .footer-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="FlowDesk ホーム">
+        <span class="brand-mark">F</span><span>FlowDesk　demo.yanase.mncoktlab-t.com</span>
+      </a>
+      <nav class="nav-links" aria-label="メインナビゲーション">
+        <a href="#features">機能</a>
+        <a href="#security">セキュリティ</a>
+        <button class="btn btn-secondary btn-small" data-login>ログイン</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div id="view-loading" class="status-view container">
+      <div class="panel loading"><span class="spinner" aria-hidden="true"></span>アプリを準備しています...</div>
+    </div>
+
+    <div id="view-error" class="status-view container" hidden>
+      <div class="panel error">
+        <strong>ログイン処理でエラーが発生しました</strong>
+        <p id="error-message"></p>
+        <button class="btn btn-secondary" onclick="location.href=location.pathname">TOPへ戻る</button>
+      </div>
+    </div>
+
+    <div id="view-authenticated" class="status-view container" hidden>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">ログイン済み</span>
+            <h1>ようこそ、FlowDeskへ</h1>
+            <div class="user-line">ログイン中: <strong id="user-email"></strong></div>
+          </div>
+          <button class="btn btn-secondary" data-logout>ログアウト</button>
+          <button class="btn btn-primary" onclick="registerPasskey()">Passkeyを追加</button>
+        </div>
+        <pre id="user-profile" aria-label="ユーザープロフィール"></pre>
+      </section>
+    </div>
+
+    <div id="view-unauthenticated" hidden>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <span class="eyebrow">スマートなチーム運営を、今日から</span>
+            <h1>チームの仕事を<br><span class="gradient-text">もっとシンプルに。</span></h1>
+            <p class="hero-copy">タスク、進捗、コミュニケーションをひとつの場所に。FlowDeskなら、チーム全体の動きがすぐに見えます。</p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" data-signup>無料で始める <span aria-hidden="true">→</span></button>
+              <button class="btn btn-secondary" data-login>ログイン</button>
+            </div>
+            <div class="trust-row"><span>初期費用なし</span><span>すぐに利用可能</span><span>安全なログイン</span></div>
+          </div>
+
+          <div class="dashboard-wrap" aria-label="ダッシュボードのイメージ">
+            <div class="dashboard">
+              <div class="window-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+              <div class="mock-grid">
+                <aside class="sidebar"><div class="side-logo"></div><div class="side-item active"></div><div class="side-item"></div><div class="side-item"></div><div class="side-item"></div></aside>
+                <div class="mock-main">
+                  <div class="mock-title"></div>
+                  <div class="stat-row"><div class="stat"></div><div class="stat"></div><div class="stat"></div></div>
+                  <div class="chart"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+                  <div class="activity"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <h2>仕事の流れを、ひとつにつなぐ</h2>
+            <p>迷わず使えるシンプルな画面で、日々のチームワークを支えます。</p>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card"><div class="feature-icon">✓</div><h3>タスクを見える化</h3><p>担当と進捗をひと目で把握。優先すべき仕事が明確になります。</p></article>
+            <article class="feature-card"><div class="feature-icon">↗</div><h3>進捗をリアルタイム共有</h3><p>チームの変化をすぐに共有。確認のためのやり取りを減らします。</p></article>
+            <article id="security" class="feature-card"><div class="feature-icon">◇</div><h3>セキュアなアクセス</h3><p>認証基盤と連携し、ユーザーごとに安全なサインイン体験を提供します。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container cta">
+          <div><h2>新しい働き方を始めませんか？</h2><p>アカウントを作成して、FlowDeskのデモを体験してください。</p></div>
+          <button class="btn" data-signup>デモを始める <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container footer-inner"><span>© 2026 FlowDesk Demo</span><span>Secure authentication powered by Auth0</span></div>
+  </footer>
+
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.18/auth0-spa-js.production.js"></script>
+  <script>
+    const views = ['loading', 'error', 'authenticated', 'unauthenticated'];
+    const displayView = (name) => views.forEach((view) => {
+      document.getElementById(`view-${view}`).hidden = view !== name;
+    });
+    const setTextContent = (id, content) => {
+      document.getElementById(id).textContent = content ?? '';
+    };
+
+    (async () => {
+      try {
+        const appConfigResponse = await fetch('/api/config', { cache: 'no-store' });
+        if (!appConfigResponse.ok) throw new Error('アプリ設定を取得できませんでした。');
+        const appConfig = await appConfigResponse.json();
+        window.appConfig = appConfig;
+        window.client = await auth0.createAuth0Client({
+          domain: appConfig.auth0Domain,
+          clientId: appConfig.auth0ClientId,
+          authorizationParams: {
+            redirect_uri: location.origin,
+            audience: appConfig.auth0Audience,
+            scope: "openid profile email read:me:authentication_methods create:me:authentication_methods"
+          }
+        });
+
+        document.querySelectorAll('[data-login]').forEach((button) => {
+          button.addEventListener('click', () => window.client.loginWithRedirect());
+        });
+        document.querySelectorAll('[data-signup]').forEach((button) => {
+          button.addEventListener('click', () => window.client.loginWithRedirect({
+            authorizationParams: { screen_hint: 'signup' }
+          }));
+        });
+
+        document.querySelectorAll('[data-logout]').forEach((button) => {
+          button.addEventListener('click', () => window.client.logout({
+            logoutParams: {
+              federated: true,
+              returnTo: location.origin
+            }
+          }));
+        });
+
+        /*コメントアウト
+        document.querySelectorAll('[data-logout]').forEach((button) => {
+          button.addEventListener('click', () => window.client.logout({
+            logoutParams: { returnTo: location.origin }
+          }));
+        });
+        */
+        if (location.search.includes('error=')) {
+          const params = new URLSearchParams(location.search);
+          setTextContent('error-message', `${params.get('error')}: ${params.get('error_description') || '詳細情報はありません'}`);
+          displayView('error');
+          history.replaceState({}, '', location.pathname);
+          return;
+        }
+
+        if (location.search.includes('code=') && location.search.includes('state=')) {
+          await window.client.handleRedirectCallback();
+          history.replaceState({}, '', location.pathname);
+        }
+
+        if (await window.client.isAuthenticated()) {
+          const user = await window.client.getUser();
+          setTextContent('user-email', user.email || user.name || 'ユーザー');
+          setTextContent('user-profile', JSON.stringify(user, null, 2));
+          displayView('authenticated');
+          return;
+        }
+
+        displayView('unauthenticated');
+      } catch (error) {
+        console.error(error);
+        setTextContent('error-message', error?.message || '予期しないエラーが発生しました。');
+        displayView('error');
+      }
+    })();
+
+    async function registerPasskey() {
+      console.log("Add Passkey start");
+      try {
+            
+        const token = await client.getTokenSilently({
+          // authorizationParams: {
+          //   audience: "https://demo-yanase.cic-demo-platform.auth0app.com/me/"
+          // }
+        });
+        console.log("Token:",token);
+        console.log("segments", token.split('.').length);
+        const claims = await client.getIdTokenClaims();
+        console.log("id claims", claims);
+
+        const response = await fetch(
+          `${window.appConfig.myAccountApiBase}/v1/authentication-methods`,
+          
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              type: "passkey"
+            })
+          }
+        );
+
+        // console.log("status", response.status);
+        const result = await response.json();
+  
+
+
+
+
+        console.log("Enrollment result:", result);
+
+        const publicKeyOptions = preparePublicKeyOptions(
+          result.authn_params_public_key
+        );
+
+        console.log("Prepared publicKey:", publicKeyOptions);
+
+        const credential = await navigator.credentials.create({
+          publicKey: publicKeyOptions
+        });
+
+        console.log("credential:",credential);
+        console.log(JSON.stringify(result.authn_params_public_key,null,2));
+
+        const verifyResponse = await fetch(
+          `${window.appConfig.myAccountApiBase}/v1/authentication-methods/verify`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              auth_session: result.auth_session,
+
+              authn_response: {
+                id: credential.id,
+                rawId: credential.rawId,
+                response: credential.response,
+                type: credential.type
+              }
+            })
+          }
+        );
+
+      } catch (e) {
+        console.log("ERROR", e);
+      }
+    }
+
+function base64UrlToUint8Array(value) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+
+  const base64 = (value + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const binary = atob(base64);
+
+  return Uint8Array.from(
+    binary,
+    char => char.charCodeAt(0)
+  );
+}
+
+  function preparePublicKeyOptions(options) {
+    const publicKey = structuredClone(options);
+
+    publicKey.challenge =
+      base64UrlToUint8Array(publicKey.challenge);
+
+    publicKey.user.id =
+      base64UrlToUint8Array(publicKey.user.id);
+
+    if (Array.isArray(publicKey.excludeCredentials)) {
+      publicKey.excludeCredentials =
+        publicKey.excludeCredentials.map(credential => ({
+          ...credential,
+          id: base64UrlToUint8Array(credential.id)
+        }));
+    }
+
+    return publicKey;
+  }
+
+
+  </script>
+</body>
+</html>
