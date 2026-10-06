@@ -122,13 +122,23 @@
       console.log('Serialized credential:', authnResponse);
 
       const locationHeader = challengeResponse.headers.get('Location');
+      
+      if (!locationHeader) {
+        throw new Error('Location header がありません');
+      }
+      
+      const verifyUrl =
+        new URL(`${locationHeader}/verify`, `https://${AUTH0_DOMAIN}`).href;
+      
+      
       const verifyLocation = challenge.location || locationHeader;
-      const verifyUrl = verifyLocation
-        ? new URL(verifyLocation, `https://${AUTH0_DOMAIN}`).href
-        : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
+      //const verifyUrl = verifyLocation
+      //  ? new URL(verifyLocation, `https://${AUTH0_DOMAIN}`).href
+      //  : `${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       //const verifyUrl=`${MY_ACCOUNT_BASE}/authentication-methods/verify`;
       
       console.log('verifyUrl:', verifyUrl);
+
       
       const verifyResponse = await fetch(verifyUrl, {
         method: 'POST',
@@ -136,6 +146,10 @@
         body: JSON.stringify({ type:'passkey',location: challenge.location,auth_session: challenge.auth_session, authn_response: authnResponse })
       });
       console.log('verifyResponse通過');
+      console.log('challenge=', challenge);
+      console.log('Location header=', challengeResponse.headers.get('Location'));
+
+      
       const verified = await readResponse(verifyResponse);
       console.log('Passkey verify result:', verified);
       showPasskeyStatus('Passkeyの登録が完了しました。');
